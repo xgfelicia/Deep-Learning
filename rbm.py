@@ -66,7 +66,7 @@ def train(size, epoch_num, iterates):
         s = 0.
 
         # generate dataset for every new epoch
-        training_set = np.random.normal(0, 10, size)
+        training_set = np.random.normal(5, 10, size)
         training_set = np.where(training_set >= 0, 1, 0)
         training_set = torch.Tensor(np.sort(training_set)).view((1, size))
 
