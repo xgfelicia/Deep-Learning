@@ -1,6 +1,7 @@
 # guide: https://skymind.ai/wiki/restricted-boltzmann-machine
 #        https://heartbeat.fritz.ai/guide-to-restricted-boltzmann-machines-using-pytorch-ee50d1ed21a8
 
+# transforming gaussian to bernoulli
 
 import numpy as np
 
