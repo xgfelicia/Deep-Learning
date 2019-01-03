@@ -15,7 +15,7 @@ import torchvision
 
 # take MNIST data and tranform input values from [0, 255] to [-1, 1]
 def mnist():
-    out_dir = './dataset'
+    out_dir = '../dataset'
     train = datasets.MNIST(root = out_dir, train = True, transform = transforms.ToTensor(), download = True)
     test = datasets.MNIST(root = out_dir, train = False, transform = transforms.ToTensor())
     return train, test
@@ -110,7 +110,7 @@ if __name__ == '__main__':
     optimizer = optim.Adam(vae.parameters())
 
     # training
-    for epoch in range(0, 20):
+    for epoch in range(0, 30):
         training(vae, optimizer, epoch, train_loader)
 
     generate_image(vae)

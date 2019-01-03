@@ -10,13 +10,14 @@ import torch.nn.functional as F
 
 from torch.autograd.variable import Variable
 from torchvision import transforms, datasets
+import torchvision
 
 
 # take MNIST data and tranform input values from [0, 255] to [-1, 1]
 def mnist():
     compose = transforms.Compose([transforms.ToTensor(),
                 transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5,0.5))])
-    out_dir = './dataset'
+    out_dir = '../dataset'
     return datasets.MNIST(root = out_dir, train = True, transform = compose, download = True)
 
 def img_to_vec(images):
@@ -168,4 +169,14 @@ if __name__ == '__main__':
             fake_data = g_net.forward(fake_vec)
             g_error = train_generator(d_net, g_opt, fake_data)
 
+            # print error
             print(epoch, n_batch, "Errors:", d_error.data, g_error.data)
+
+            '''
+            # display progress
+            if n_batch % 100 == 0:
+                vectors = Variable(torch.randn(n, 100))
+                test_images = vec_to_img(g_net(vectors))
+                torchvision.utils.save_image(test_images.view(-1, 1, 28, 28),
+                                                './sample-gan-' + str(n_batch) + '.png')
+            '''
