@@ -172,11 +172,10 @@ if __name__ == '__main__':
             # print error
             print(epoch, n_batch, "Errors:", d_error.data, g_error.data)
 
-            '''
+
             # display progress
             if n_batch % 100 == 0:
                 vectors = Variable(torch.randn(n, 100))
                 test_images = vec_to_img(g_net(vectors))
                 torchvision.utils.save_image(test_images.view(-1, 1, 28, 28),
                                                 './sample-gan-' + str(n_batch) + '.png')
-            '''
