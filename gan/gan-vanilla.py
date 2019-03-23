@@ -12,6 +12,19 @@ from torch.autograd.variable import Variable
 from torchvision import transforms, datasets
 import torchvision
 
+import argparse
+
+parser = argparse.ArgumentParser(description = "MNIST Testing")
+parser.add_argument('--no-cuda', action = 'store_true', default = False)
+
+ARGS = parser.parse_args()
+
+use_cuda = torch.cuda.is_available() and not ARGS.no_cuda
+device = torch.device('cuda' if use_cuda else 'cpu')
+print(device)
+
+
+###############################################################
 
 # take MNIST data and tranform input values from [0, 255] to [-1, 1]
 def mnist():
@@ -69,6 +82,7 @@ class Discriminator(nn.Module):
         return x
 
 
+
 ############################################################
 # generates fake images
 
@@ -107,18 +121,21 @@ class Generator(nn.Module):
         return x
 
 
-#############################################################
-def train_discriminator(discriminator, optimizer, real_data, fake_data):
+
+
+#################################################################
+
+def train_discriminator( discriminator, optimizer, real_data, fake_data):
     n = real_data.size(0)
     loss = nn.BCELoss() # binary cross entropy loss
     optimizer.zero_grad()
 
     predict_real = discriminator.forward(real_data)
-    err_real = loss(predict_real, Variable(torch.ones(n, 1)))
+    err_real = loss(predict_real, Variable(torch.ones(n, 1)).to(device) )
     err_real.backward()
 
     predict_fake = discriminator.forward(fake_data)
-    err_fake = loss(predict_fake, Variable(torch.zeros(n, 1)))
+    err_fake = loss(predict_fake, Variable(torch.zeros(n, 1)).to(device) )
     err_fake.backward()
 
     optimizer.step()
@@ -126,13 +143,13 @@ def train_discriminator(discriminator, optimizer, real_data, fake_data):
     return err_real + err_fake, predict_real, predict_fake
 
 
-def train_generator(discriminator, optimizer, fake_data):
+def train_generator( discriminator, optimizer, fake_data):
     n = fake_data.size(0)
     loss = nn.BCELoss()
     optimizer.zero_grad()
 
     predict = discriminator(fake_data)
-    error = loss(predict, Variable(torch.ones(n, 1)))
+    error = loss(predict, Variable(torch.ones(n, 1)).to(device) )
     error.backward()
 
     optimizer.step()
@@ -147,21 +164,22 @@ if __name__ == '__main__':
     loader = torch.utils.data.DataLoader(data, batch_size = size, shuffle = True)
     num_batches = len(loader)
 
-    d_net = Discriminator()
-    g_net = Generator()
+    d_net = Discriminator().to(device)
+    g_net = Generator().to(device)
     d_opt = optim.Adam(d_net.parameters(), lr = 0.0002)
     g_opt = optim.Adam(g_net.parameters(), lr = 0.0002)
 
-    epochs = 100
+    epochs = 1
     for epoch in range(0, epochs):
         for n_batch, (real_batch,_) in enumerate(loader):
             n = real_batch.size(0)
+            real_batch = real_batch.to(device)
 
             # train discriminator
-            real_data = Variable(img_to_vec(real_batch))
+            real_data = Variable(img_to_vec(real_batch)).to(device)
 
-            fake_vec = Variable(torch.randn(n, 100))
-            fake_data = g_net.forward(fake_vec).detach()
+            fake_vec = Variable(torch.randn(n, 100)).to(device)
+            fake_data = g_net.forward(fake_vec).detach().to(device)
 
             d_error, d_pred_real, d_pred_fake = train_discriminator(d_net, d_opt, real_data, fake_data)
 
@@ -169,13 +187,12 @@ if __name__ == '__main__':
             fake_data = g_net.forward(fake_vec)
             g_error = train_generator(d_net, g_opt, fake_data)
 
-            # print error
-            print(epoch, n_batch, "Errors:", d_error.data, g_error.data)
-
 
             # display progress
             if n_batch % 100 == 0:
-                vectors = Variable(torch.randn(n, 100))
+                print(epoch, n_batch, "Errors:", d_error.data, g_error.data)
+
+                vectors = Variable(torch.randn(n, 100)).to(device)
                 test_images = vec_to_img(g_net(vectors))
                 torchvision.utils.save_image(test_images.view(-1, 1, 28, 28),
                                                 './sample-gan-' + str(n_batch) + '.png')
