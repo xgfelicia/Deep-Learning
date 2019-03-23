@@ -1,5 +1,4 @@
 
-# WIP
 
 import numpy as np
 
@@ -7,10 +6,22 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
-
 from torch.autograd.variable import Variable
 from torchvision import transforms, datasets
 import torchvision
+
+import argparse
+
+parser = argparse.ArgumentParser(description = "MNIST Testing")
+parser.add_argument('--no-cuda', action = 'store_true', default = False)
+
+ARGS = parser.parse_args()
+
+use_cuda = torch.cuda.is_available() and not ARGS.no_cuda
+device = torch.device('cuda' if use_cuda else 'cpu')
+print(device)
+
+###############################################################
 
 
 # take MNIST data and tranform input values from [0, 255] to [-1, 1]
@@ -26,8 +37,9 @@ def loss_function(recon_x, x, mu, log_var):
     KLD = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())
     return BCE + KLD
 
+
 def generate_image(vae):
-    z = torch.randn(64, 2)
+    z = torch.randn(64, 2).to(device)
     sample = vae.decoder(z)
 
     torchvision.utils.save_image(sample.view(64, 1, 28, 28), './sample_vae' + '.png')
@@ -82,6 +94,7 @@ def training(vae, optimizer, epoch, train_loader):
     train_loss = 0
 
     for batch_idx, (data, _) in enumerate(train_loader):
+        data = data.to(device)
         optimizer.zero_grad()
 
         recon_batch, mu, log_var = vae(data)
@@ -106,11 +119,12 @@ if __name__ == '__main__':
     train_loader = torch.utils.data.DataLoader(train, batch_size = size, shuffle = True)
     test_loader = torch.utils.data.DataLoader(test, batch_size = size, shuffle = False)
 
-    vae = VAE()
-    optimizer = optim.Adam(vae.parameters())
+    vae = VAE().to(device)
+
+    optimizer = optim.Adam(vae.parameters(), lr = 0.001)
 
     # training
-    for epoch in range(0, 30):
+    for epoch in range(0, 100):
         training(vae, optimizer, epoch, train_loader)
 
     generate_image(vae)
